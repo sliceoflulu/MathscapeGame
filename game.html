@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MathemaQuest: Indie Math Puzzle Adventure (Edisi Kelas)</title>
+    <style>
+        /* CSS Inti */
+        :root {
+            --bg-color: #111827;
+            --text-color: #f9fafb;
+            --panel-bg: #1f2937;
+        }
+        .light-theme {
+            --bg-color: #f3f4f6;
+            --text-color: #111827;
+            --panel-bg: #e5e7eb;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 10px;
+            transition: background-color 0.3s, color 0.3s;
+            box-sizing: border-box;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1050px;
+            padding: 10px 15px;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .game-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            max-width: 1050px;
+        }
+        .main-play-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        .canvas-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            width: 100%;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: auto; /* Membuat canvas responsif di HP */
+            max-width: 800px;
+        }
+        .sidebar {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 240px;
+            flex-grow: 1;
+            box-sizing: border-box;
+        }
+        /* Overlay & Modals */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            color: white;
+            text-align: center;
+        }
+        #puzzle-modal {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .modal-content {
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            border: 2px solid #3b82f6;
+            width: 80%;
+            max-width: 400px;
+        }
+        .hidden-element {
+            display: none !important;
+        }
+        /* Progress Bar */
+        .progress-bar {
+            width: 260px;
+            height: 20px;
+            background: #334155;
+            border-radius: 10px;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #3b82f6;
+            transition: width 0.15s linear;
+        }
+        /* Buttons & Inputs */
+        button {
+            cursor: pointer;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn { background: #3b82f6; color: white; }
+        .btn:hover:not(:disabled) { background: #2563eb; }
+        .btn.disabled { background: #475569; cursor: not-allowed; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-secondary { background: #4b5563; color: white; }
+        .btn-secondary:hover { background: #374151; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+        
+        input[type="number"] {
+            padding: 10px;
+            width: 80%;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+            text-align: center;
+        }
+        /* Papan Peringkat Scrollable */
+        .leaderboard-box ol {
+            max-height: 220px;
+            overflow-y: auto;
+            padding-left: 25px;
+            margin: 10px 0;
+            text-align: left;
+        }
+        .leaderboard-box li {
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            border-bottom: 1px dashed #4b5563;
+            padding-bottom: 4px;
+        }
+        /* Panel Khusus Guru */
+        .teacher-panel {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #4b5563;
+        }
+        .teacher-panel h4 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: #f59e0b;
+        }
+        .teacher-btns {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .teacher-btns button {
+            font-size: 0.75rem;
+            padding: 6px 10px;
+            flex-grow: 1;
+        }
+        /* Mobile Controls */
+        .mobile-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .row { display: flex; gap: 12px; }
+        .ctrl-btn { 
+            width: 55px; 
+            height: 45px; 
+            font-size: 18px; 
+            background: var(--panel-bg); 
+            color: var(--text-color); 
+            border: 1px solid #6b7280;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            -webkit-user-select: none; /* Cegah zoom/seleksi teks di HP */
+            user-select: none;
+        }
+        .ctrl-btn:active { background: #3b82f6; color: white; }
+
+        /* Optimasi Khusus Layar Ponsel / Android (Media Queries) */
+        @media (max-width: 768px) {
+            body { padding: 5px; }
+            header { padding: 8px; margin-bottom: 10px; }
+            .game-title { font-size: 1rem; }
+            .controls-panel button { font-size: 0.75rem; padding: 6px 10px; }
+            .mobile-controls { display: flex !important; } /* Pastikan muncul di HP */
+        }
+    </style>
+</head>
+<body class="dark-theme">
+
+    <div id="loading-screen" class="overlay">
+        <div class="loader-content">
+            <h1>MATHEMA QUEST</h1>
+            <p>Menyiapkan dungeon matematika kelas...</p>
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <button id="start-btn" class="btn disabled" disabled>MULAI PETUALANGAN</button>
+        </div>
+    </div>
+
+    <header>
+        <div class="game-title">🧮 MathemaQuest</div>
+        <div class="controls-panel">
+            <button id="theme-toggle" class="icon-btn" title="Ubah Tema">🌓 Tema</button>
+            <button id="mute-toggle" class="icon-btn" title="Mute Suara">🔊 Mute</button>
+            <button id="download-btn" class="btn-success">💾 Unduh</button>
+        </div>
+    </header>
+
+    <main class="game-container">
+        <!-- Area Utama Game (Canvas & Kontrol Mobile tepat di bawahnya) -->
+        <div class="main-play-area">
+            <div class="canvas-wrapper">
+                <canvas id="gameCanvas" width="800" height="450"></canvas>
+                
+                <div id="puzzle-modal" class="hidden-element">
+                    <div class="modal-content">
+                        <h3>🔒 PINTU TERKUNCI!</h3>
+                        <p id="puzzle-question">Berapakah hasil dari 12 + 15?</p>
+                        <input type="number" id="puzzle-answer" placeholder="Jawaban kamu..." autocomplete="off">
+                        <button id="submit-answer-btn" class="btn">Buka Pintu</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Navigasi HP Pas di Bawah Kotak Game -->
+            <div class="mobile-controls">
+                <button class="ctrl-btn" id="ctrl-up">🔼</button>
+                <div class="row">
+                    <button class="ctrl-btn" id="ctrl-left">◀️</button>
+                    <button class="ctrl-btn" id="ctrl-action">⤶</button>
+                    <button class="ctrl-btn" id="ctrl-right">▶️</button>
+                </div>
+                <button class="ctrl-btn" id="ctrl-down">🔽</button>
+            </div>
+        </div>
+
+        <!-- Sidebar Statistik & Peringkat -->
+        <aside class="sidebar">
+            <div class="status-box">
+                <h3>Statistik Permainan</h3>
+                <p>Level Saat Ini: <span id="ui-level">1</span></p>
+                <p>Nyawa Tersisa: <span id="ui-lives">❤️❤️❤️</span></p>
+                <p>Waktu Berjalan: <span id="ui-timer">00:00</span></p>
+            </div>
+
+            <div class="leaderboard-box">
+                <h3>🏆 Papan Peringkat Kelas</h3>
+                <ol id="leaderboard-list">
+                    <li>Belum ada rekor terdaftar</li>
+                </ol>
+                
+                <div class="teacher-panel">
+                    <h4>⚙️ Menu Pengawas Guru</h4>
+                    <div class="teacher-btns">
+                        <button id="btn-reset-level" class="btn-warning" title="Ulangi progres game siswa ke level 1">🔄 Reset Level</button>
+                        <button id="btn-export" class="btn-secondary" title="Salin data nilai untuk digabungkan">📤 Ekspor Skor</button>
+                        <button id="btn-import" class="btn-secondary" title="Tempel data nilai dari perangkat siswa">📥 Impor Skor</button>
+                        <button id="btn-reset-leaderboard" class="btn-danger" title="Kosongkan papan peringkat kelas">🗑️ Reset Papan</button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameState = {
+            level: 1,
+            lives: 3,
+            score: 0,
+            timer: 0,
+            timerInterval: null,
+            isPlaying: false,
+            isMuted: false,
+            savedProgress: null
+        };
+
+        let player = { x: 50, y: 200, size: 25, speed: 4, color: '#6366f1' };
+        let door = { x: 720, y: 190, width: 30, height: 50, isLocked: true, color: '#f59e0b' };
+        let enemies = [];
+        let currentPuzzle = { question: '', answer: 0 };
+        let levelTransitionAlpha = 0;
+
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playTone(freq, type, duration, vol = 0.1) {
+            if (gameState.isMuted || !audioCtx) return;
+            try {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) { console.log("Audio error:", e); }
+        }
+
+        function playBackgroundMusic() {
+            if (!gameState.isPlaying || gameState.isMuted) return;
+            let notes = [261.63, 329.63, 392.00, 523.25];
+            notes.forEach((note, index) => {
+                setTimeout(() => {
+                    if(gameState.isPlaying) playTone(note, 'triangle', 0.4, 0.05);
+                }, index * 350);
+            });
+        }
+        let musicInterval = setInterval(playBackgroundMusic, 1500);
+
+        let keys = {};
+        window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+        window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+        let progress = 0;
+        const progressFill = document.querySelector('.progress-fill');
+        const startBtn = document.getElementById('start-btn');
+        const loadingInterval = setInterval(() => {
+            progress += Math.floor(Math.random() * 15) + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(loadingInterval);
+                startBtn.classList.remove('disabled');
+                startBtn.removeAttribute('disabled');
+            }
+            progressFill.style.width = progress + '%';
+        }, 150);
+
+        startBtn.addEventListener('click', () => {
+            document.getElementById('loading-screen').style.display = 'none';
+            initAudio();
+            loadGameProgress();
+            gameState.isPlaying = true;
+            startTimer();
+            generateLevelData();
+            gameLoop();
+        });
+
+        function generateMathPuzzle(level) {
+            let num1 = Math.floor(Math.random() * (level * 10)) + 2;
+            let num2 = Math.floor(Math.random() * (level * 10)) + 2;
+            let operators = ['+', '-', '*'];
+            let op = operators[Math.floor(Math.random() * Math.min(level, operators.length))];
+            
+            if (op === '-') { if (num1 < num2) { let t = num1; num1 = num2; num2 = t; } }
+
+            let questionText = `Berapakah hasil dari: ${num1} ${op} ${num2}?`;
+            let answerValue = 0;
+
+            switch(op) {
+                case '+': answerValue = num1 + num2; break;
+                case '-': answerValue = num1 - num2; break;
+                case '*': answerValue = num1 * num2; break;
+            }
+            return { question: questionText, answer: answerValue };
+        }
+
+        function generateLevelData() {
+            door.isLocked = true;
+            currentPuzzle = generateMathPuzzle(gameState.level);
+            player.x = 50; player.y = 200;
+            enemies = [];
+            let enemyCount = Math.min(gameState.level + 1, 5);
+            for(let i=0; i < enemyCount; i++) {
+                enemies.push({
+                    x: 200 + (i * 100),
+                    y: Math.random() * 350 + 50,
+                    size: 20,
+                    speedY: (Math.random() * 2 + 1) * (Math.random() > 0.5 ? 1 : -1),
+                    color: '#ef4444'
+                });
+            }
+            updateUI();
+            saveGameProgress();
+        }
+
+        function updateGamePhysics() {
+            if (!gameState.isPlaying) return;
+
+            if (keys['arrowup'] || keys['w']) player.y -= player.speed;
+            if (keys['arrowdown'] || keys['s']) player.y += player.speed;
+            if (keys['arrowleft'] || keys['a']) player.x -= player.speed;
+            if (keys['arrowright'] || keys['d']) player.x += player.speed;
+
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.size > canvas.width) player.x = canvas.width - player.size;
+            if (player.y < 0) player.y = 0;
+            if (player.y + player.size > canvas.height) player.y = canvas.height - player.size;
+
+            enemies.forEach(enemy => {
+                enemy.y += enemy.speedY;
+                if (enemy.y <= 0 || enemy.y + enemy.size >= canvas.height) {
+                    enemy.speedY *= -1;
+                }
+
+                if (player.x < enemy.x + enemy.size && player.x + player.size > enemy.x &&
+                    player.y < enemy.y + enemy.size && player.y + player.size > enemy.y) {
+                        gameState.lives--;
+                        playTone(150, 'sawtooth', 0.3, 0.2);
+                        player.x = 50; player.y = 200;
+                        updateUI();
+                        if (gameState.lives <= 0) gameOver();
+                }
+            });
+
+            if (player.x + player.size >= door.x && player.y + player.size >= door.y && player.y <= door.y + door.height) {
+                if (door.isLocked) {
+                    triggerMathModal();
+                } else {
+                    nextLevelClear();
+                }
+            }
+        }
+
+        function triggerMathModal() {
+            keys = {}; 
+            document.getElementById('puzzle-question').innerText = currentPuzzle.question;
+            const modal = document.getElementById('puzzle-modal');
+            modal.classList.remove('hidden-element');
+            document.getElementById('puzzle-answer').focus();
+        }
+
+        document.getElementById('submit-answer-btn').addEventListener('click', checkUserAnswer);
+        document.getElementById('puzzle-answer').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') checkUserAnswer();
+        });
+
+        function checkUserAnswer() {
+            const answerInput = document.getElementById('puzzle-answer').value;
+            if(answerInput === "") return; 
+
+            const userAnswer = parseInt(answerInput);
+            const modal = document.getElementById('puzzle-modal');
+            
+            if (userAnswer === currentPuzzle.answer) {
+                playTone(600, 'sine', 0.2, 0.1);
+                setTimeout(() => playTone(800, 'sine', 0.3, 0.1), 100);
+                door.isLocked = false;
+                modal.classList.add('hidden-element');
+                document.getElementById('puzzle-answer').value = '';
+                player.x -= 20; 
+            } else {
+                playTone(100, 'square', 0.5, 0.2);
+                gameState.lives--;
+                updateUI();
+                alert("Jawaban salah! Pintu tetap terkunci, nyawa berkurang.");
+                modal.classList.add('hidden-element');
+                document.getElementById('puzzle-answer').value = '';
+                player.x -= 30; 
+                if (gameState.lives <= 0) gameOver();
+            }
+        }
+
+        function nextLevelClear() {
+            gameState.level++;
+            gameState.score += 100 * gameState.level;
+            playTone(523.25, 'sine', 0.1); 
+            playTone(659.25, 'sine', 0.1);
+            playTone(783.99, 'sine', 0.3);
+            levelTransitionAlpha = 1;
+            generateLevelData();
+        }
+
+        function drawVisuals() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = document.body.classList.contains('light-theme') ? '#e5e7eb' : '#1f2937';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = door.isLocked ? door.color : '#10b981';
+            ctx.fillRect(door.x, door.y, door.width, door.height);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(door.x + 5, door.y + 22, 6, 6);
+
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(player.x + 15, player.y + 5, 6, 6);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(player.x + 19, player.y + 5, 3, 3);
+
+            enemies.forEach(enemy => {
+                ctx.fillStyle = enemy.color;
+                ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(enemy.x + 6, enemy.y + 6, 8, 8);
+            });
+
+            if (levelTransitionAlpha > 0) {
+                ctx.fillStyle = `rgba(0, 0, 0, ${levelTransitionAlpha})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                levelTransitionAlpha -= 0.05;
+            }
+        }
+
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
+            updateGamePhysics();
+            drawVisuals();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            gameState.timerInterval = setInterval(() => {
+                if(gameState.isPlaying) {
+                    gameState.timer++;
+                    let mins = Math.floor(gameState.timer / 60).toString().padStart(2, '0');
+                    let secs = (gameState.timer % 60).toString().padStart(2, '0');
+                    document.getElementById('ui-timer').innerText = `${mins}:${secs}`;
+                }
+            }, 1000);
+        }
+
+        function updateUI() {
+            document.getElementById('ui-level').innerText = gameState.level;
+            document.getElementById('ui-lives').innerText = '❤️'.repeat(Math.max(0, gameState.lives));
+        }
+
+        function saveGameProgress() {
+            let progressData = { level: gameState.level, score: gameState.score, timer: gameState.timer };
+            localStorage.setItem('mathemaquest_save', JSON.stringify(progressData));
+        }
+
+        function loadGameProgress() {
+            let saved = localStorage.getItem('mathemaquest_save');
+            if (saved) {
+                let parsed = JSON.parse(saved);
+                gameState.level = parsed.level;
+                gameState.score = parsed.score;
+                gameState.timer = parsed.timer;
+                updateUI();
+            }
+            updateLeaderboardView();
+        }
+
+        function gameOver() {
+            gameState.isPlaying = false;
+            clearInterval(gameState.timerInterval);
+            playTone(80, 'sawtooth', 0.8, 0.3);
+            
+            setTimeout(() => {
+                let name = prompt(`GAME OVER!\nKamu bertahan hingga Level ${gameState.level}.\nMasukkan nama lengkap/panggilanmu:`) || "Siswa Anonim";
+                name = name.substring(0, 18);
+
+                let leaderboard = JSON.parse(localStorage.getItem('mathemaquest_leaderboard')) || [];
+                leaderboard.push({ name: name, score: gameState.score, level: gameState.level, time: gameState.timer });
+                
+                leaderboard.sort((a, b) => {
+                    if (b.level !== a.level) return b.level - a.level;
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.time - b.time; 
+                });
+
+                localStorage.setItem('mathemaquest_leaderboard', JSON.stringify(leaderboard.slice(0, 45)));
+                localStorage.removeItem('mathemaquest_save');
+                location.reload();
+            }, 100);
+        }
+
+        function updateLeaderboardView() {
+            let leaderboard = JSON.parse(localStorage.getItem('mathemaquest_leaderboard')) || [];
+            let listContainer = document.getElementById('leaderboard-list');
+            
+            if(leaderboard.length > 0) {
+                listContainer.innerHTML = leaderboard.map((player, index) => {
+                    let mins = Math.floor(player.time / 60).toString().padStart(2, '0');
+                    let secs = (player.time % 60).toString().padStart(2, '0');
+                    let medal = index === 0 ? '👑 ' : (index === 1 ? '🥈 ' : (index === 2 ? '🥉 ' : `${index + 1}. `));
+                    return `<li><strong>${medal}${player.name}</strong><br><small>Level ${player.level} | ${player.score} Pts | ⏱️ ${mins}:${secs}</small></li>`;
+                }).join('');
+            } else {
+                listContainer.innerHTML = '<li>Belum ada rekor kelas terdaftar</li>';
+            }
+        }
+
+        document.getElementById('btn-reset-level').addEventListener('click', () => {
+            if(confirm("Reset progres permainan ke LEVEL 1?")) {
+                localStorage.removeItem('mathemaquest_save');
+                gameState.level = 1; gameState.score = 0; gameState.timer = 0; gameState.lives = 3;
+                document.getElementById('puzzle-modal').classList.add('hidden-element');
+                document.getElementById('puzzle-answer').value = '';
+                updateUI(); startTimer(); generateLevelData();
+                alert("Progres direset ke Level 1!");
+            }
+        });
+
+        document.getElementById('btn-reset-leaderboard').addEventListener('click', () => {
+            if(confirm("Hapus semua data papan peringkat?")) {
+                localStorage.removeItem('mathemaquest_leaderboard');
+                location.reload();
+            }
+        });
+
+        document.getElementById('btn-export').addEventListener('click', () => {
+            let data = localStorage.getItem('mathemaquest_leaderboard') || "[]";
+            prompt("KODE SKOR KELAS:", data);
+        });
+
+        document.getElementById('btn-import').addEventListener('click', () => {
+            let inputData = prompt("TEMPEL KODE SKOR:");
+            if(!inputData) return;
+            try {
+                let incoming = JSON.parse(inputData);
+                if(!Array.isArray(incoming)) throw new Error();
+                let current = JSON.parse(localStorage.getItem('mathemaquest_leaderboard')) || [];
+                let merged = current.concat(incoming);
+                merged.sort((a, b) => {
+                    if (b.level !== a.level) return b.level - a.level;
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.time - b.time;
+                });
+                localStorage.setItem('mathemaquest_leaderboard', JSON.stringify(merged.slice(0, 45)));
+                alert("Data berhasil digabungkan!");
+                location.reload();
+            } catch(e) { alert("Gagal membaca kode skor."); }
+        });
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('light-theme');
+            document.body.classList.toggle('dark-theme');
+        });
+
+        document.getElementById('mute-toggle').addEventListener('click', () => {
+            gameState.isMuted = !gameState.isMuted;
+            document.getElementById('mute-toggle').innerText = gameState.isMuted ? '🔇 Unmute' : '🔊 Mute';
+        });
+
+        // Touch handling anti-scrolling saat memijat tombol kontrol mobile
+        const bindMobileBtn = (id, keyName) => {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; }, { passive: false });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; }, { passive: false });
+            btn.addEventListener('mousedown', () => { keys[keyName] = true; });
+            btn.addEventListener('mouseup', () => { keys[keyName] = false; });
+        };
+        bindMobileBtn('ctrl-up', 'arrowup');
+        bindMobileBtn('ctrl-down', 'arrowdown');
+        bindMobileBtn('ctrl-left', 'arrowleft');
+        bindMobileBtn('ctrl-right', 'arrowright');
+        document.getElementById('ctrl-action').addEventListener('click', () => {
+            if (!document.getElementById('puzzle-modal').classList.contains('hidden-element')) {
+                checkUserAnswer();
+            }
+        });
+
+        document.getElementById('download-btn').addEventListener('click', () => {
+            let htmlContent = document.documentElement.outerHTML;
+            let blob = new Blob([htmlContent], { type: 'text/html' });
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'mathema_quest_kelas.html';
+            a.click();
+        });
+    </script>
+</body>
+</html>
